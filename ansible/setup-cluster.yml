@@ -1,0 +1,149 @@
+- name: Pre steps
+  hosts: all
+  become: true
+  tasks:
+    - name: Enable ntp
+      command: timedatectl set-ntp true
+
+    - name: Install ipset e ipvsadm packages
+      apt:
+        name:
+          - ipset
+          - ipvsadm
+        state: present
+        update_cache: yes
+
+- name: Setup K3s server
+  hosts: server
+  become: true
+  roles:
+    - role: k3s.orchestration.k3s_server
+
+- name: Setup K3s agent
+  hosts: agent
+  become: true
+  roles:
+    - role: k3s.orchestration.k3s_agent
+
+- name: Post steps
+  hosts: agent
+  become: true
+  tasks:
+    - name: Verify containerd config file
+      stat:
+        path: /var/lib/rancher/k3s/agent/etc/containerd/config.toml
+      register: containerd_config
+
+    - name: Copy config.toml to config.toml.tmpl
+      copy:
+        src: /var/lib/rancher/k3s/agent/etc/containerd/config.toml
+        dest: /var/lib/rancher/k3s/agent/etc/containerd/config.toml.tmpl
+        remote_src: yes
+      when: containerd_config.stat.exists
+
+    - name: Set nvidia runtime as default
+      lineinfile:
+        path: /var/lib/rancher/k3s/agent/etc/containerd/config.toml.tmpl
+        regexp: '^\s*default_runtime_name\s*='
+        line: '  default_runtime_name = "nvidia"'
+        insertafter: 'disable_snapshot_annotations = true'
+      when: containerd_config.stat.exists
+
+    - name: Verify nvidia block
+      shell: |
+        grep -A2 '\[plugins."io.containerd.grpc.v1.cri".containerd.runtimes."nvidia"\]' /var/lib/rancher/k3s/agent/etc/containerd/config.toml.tmpl | grep 'runtime_type = "io.containerd.runc.v2"'
+      register: nvidia_runtime_present
+      ignore_errors: true
+      changed_when: false
+
+    - name: Configure nvidia runtime on containerd
+      blockinfile:
+        path: /var/lib/rancher/k3s/agent/etc/containerd/config.toml.tmpl
+        marker: "# {mark} nvidia runtime"
+        block: |
+          [plugins."io.containerd.grpc.v1.cri".containerd.runtimes."nvidia"]
+            runtime_type = "io.containerd.runc.v2"
+          [plugins."io.containerd.grpc.v1.cri".containerd.runtimes."nvidia".options]
+            BinaryName = "/usr/bin/nvidia-container-runtime"
+            SystemdCgroup = true
+      when:
+        - containerd_config.stat.exists
+        - nvidia_runtime_present.rc != 0
+
+    - name: Restart containerd
+      systemd:
+        name: containerd
+        state: restarted
+
+    - name: Remove hold on nvidia packages
+      command: apt-mark unhold nvidia-container-toolkit nvidia-docker2
+      when: inventory_hostname in groups["nano"]
+      
+    - name: Download nvidia repository file
+      get_url:
+        url: "https://nvidia.github.io/nvidia-docker/ubuntu18.04/nvidia-docker.list"
+        dest: "/etc/apt/sources.list.d/nvidia-docker.list"
+        mode: '0644'
+      when: inventory_hostname in groups["nano"]
+
+    - name: Add nvidia repository key
+      apt_key:
+        url: "https://nvidia.github.io/nvidia-docker/gpgkey"
+        state: present
+      when: inventory_hostname in groups["nano"]
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+      when: inventory_hostname in groups["nano"]
+
+    - name: Install nvidia packages
+      apt:
+        name:
+          - nvidia-container-toolkit
+          - nvidia-docker2
+        state: latest
+      when: inventory_hostname in groups["nano"]
+
+    - name: Block nvidia packages updates
+      command: apt-mark hold nvidia-container-toolkit nvidia-docker2
+      when: inventory_hostname in groups["nano"]
+
+    - name: Configure nvidia docker runtime
+      copy:
+        dest: /etc/docker/daemon.json
+        content: |
+          {
+            "default-runtime": "nvidia",
+            "runtimes": {
+              "nvidia": {
+                "args": [],
+                "path": "nvidia-container-runtime"
+              }
+            }
+          }
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Restart docker and containerd
+      systemd:
+        name: "{{ item }}"
+        state: restarted
+      loop:
+        - docker
+        - containerd
+
+    - name: Reboot node
+      reboot:
+        reboot_timeout: 900
+        test_command: uptime
+      when: containerd_config.stat.exists
+
+    - name: Install jetson-stats
+      pip:
+        name: jetson-stats
+        extra_args: --upgrade --force-reinstall
+
+    - name: Reboot node
+      reboot:

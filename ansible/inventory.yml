@@ -1,0 +1,41 @@
+k3s_cluster:
+  vars:
+    ansible_user: administrator
+    ansible_password: "Jetson@2024!"
+    ansible_become_password: "Jetson@2024!"
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+    k3s_version: v1.32.5+k3s1
+    token: "token"
+    api_endpoint: "{{ hostvars[groups['server'][0]]['ansible_host'] | default(groups['server'][0]) }}"
+    extra_server_args: "--kube-proxy-arg proxy-mode=ipvs --disable servicelb"
+  children:
+    server:
+      hosts:
+        k3s-master-01:
+          ansible_host: 192.168.1.251
+          ansible_password: "dsoplb@2025!"
+          ansible_become_password: "dsoplb@2025!"
+    agent:
+      children:
+        nano:
+          hosts:
+            nano90:
+              ansible_host: 192.168.1.90
+            nano91:
+              ansible_host: 192.168.1.91
+            nano92:
+              ansible_host: 192.168.1.92
+            nano93:
+              ansible_host: 192.168.1.93
+            nano94:
+              ansible_host: 192.168.1.94
+            nano95:
+              ansible_host: 192.168.1.95
+            nano96:
+              ansible_host: 192.168.1.96
+            nano97:
+              ansible_host: 192.168.1.97
+        orin:
+          hosts:
+            orin99:
+              ansible_host: 192.168.1.99

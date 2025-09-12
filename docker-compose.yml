@@ -1,0 +1,6 @@
+services:
+  ansible-controller:
+    image: alpine/ansible:2.16.1
+    command: "sleep infinity"
+    volumes:
+    - ./ansible:/ansible
