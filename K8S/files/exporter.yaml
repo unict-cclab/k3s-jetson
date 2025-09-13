@@ -1,0 +1,108 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: jetson-exporter-sa
+  namespace: monitoring
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: jetson-exporter-read-pods
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: jetson-exporter-read-pods-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: jetson-exporter-read-pods
+subjects:
+  - kind: ServiceAccount
+    name: jetson-exporter-sa
+    namespace: monitoring
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: jetson-exporter
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: jetson-exporter
+  template:
+    metadata:
+      labels:
+        app: jetson-exporter
+    spec:
+      serviceAccountName: jetson-exporter-sa
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/os  # Cambiato da beta.kubernetes.io/os
+                    operator: In
+                    values:
+                      - linux
+                  - key: kubernetes.io/arch  # Cambiato da beta.kubernetes.io/arch
+                    operator: In
+                    values:
+                      - arm64
+      containers:
+        - image: dami00/jetson-stats-node-exporter:latest
+          imagePullPolicy: Always
+          name: jetson-exporter
+          ports:
+            - containerPort: 9401
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - mountPath: /run/jtop.sock
+              name: jtop-sock
+            - name: sys-volume
+              mountPath: /sys
+            - name: proc-volume
+              mountPath: /proc
+            - name: dev-volume
+              mountPath: /dev
+            - mountPath: /run/systemd/system
+              name: systemd-socket
+              readOnly: false 
+      dnsPolicy: ClusterFirst
+      hostNetwork: true
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      terminationGracePeriodSeconds: 30
+      tolerations:
+        - operator: Exists
+      volumes:
+        - hostPath:
+            path: /run/jtop.sock
+            type: Socket
+          name: jtop-sock
+        - name: sys-volume
+          hostPath:
+            path: /sys
+            type: Directory
+        - name: proc-volume
+          hostPath:
+            path: /proc
+            type: Directory
+        - name: dev-volume
+          hostPath:
+            path: /dev
+            type: Directory
+        - name: systemd-socket
+          hostPath:
+            path: /run/systemd/system
