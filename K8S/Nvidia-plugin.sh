@@ -3,7 +3,7 @@
 
 # Namespace
 NAMESPACE="nvidia-device-plugin"
-
+kubectl create namespace $NAMESPACE
 
 # 1. Add label to the nodes
 #   - jetsonorigin -> orin
