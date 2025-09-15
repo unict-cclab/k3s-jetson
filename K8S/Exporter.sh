@@ -2,7 +2,7 @@
 # Script to install Prometheus + Grafana + Jetson Exporter
 
 # Namespace where Prometheus and Grafana will be installed
-NAMESPACE="prometheus"
+NAMESPACE="monitoring"
 
 # 1. Add Prometheus Helm repository
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
