@@ -4,7 +4,7 @@ k3s_cluster:
     ansible_password: "Jetson@2024!"
     ansible_become_password: "Jetson@2024!"
     ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-    k3s_version: v1.32.5+k3s1
+    k3s_version: v1.30.14+k3s2
     token: "token"
     api_endpoint: "{{ hostvars[groups['server'][0]]['ansible_host'] | default(groups['server'][0]) }}"
     extra_server_args: "--kube-proxy-arg proxy-mode=ipvs --disable servicelb"
