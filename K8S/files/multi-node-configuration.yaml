@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: time-slicing-config
+data:
+    nano: |-
+        version: v1
+        sharing:
+          timeSlicing:
+            renameByDefault: true
+            resources:
+            - name: nvidia.com/gpu
+              # number of shared gpu for jetson nano
+              replicas: 4
+    orin: |-
+        version: v1
+        sharing:
+          timeSlicing:
+            renameByDefault: true
+            resources:
+            - name: nvidia.com/gpu
+              # number of shared gpu for jetson orin
+              replicas: 8
