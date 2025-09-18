@@ -88,6 +88,7 @@ kubectl label namespace default istio-injection=enabled
 ```bash
 kubectl apply -f ./files/istio-monitor.yml
 ```
+> Nota: Import dashboard grafana ID: 7636, Jetson Dashboard from ./k8s/files
 
 ### 5. Jetson Exporter (metriche da jtop)
 
