@@ -81,14 +81,14 @@ helm install istiod istio/istiod --version 1.26.2 \
 kubectl label namespace default istio-injection=enabled
 ```
 
-> Nota: applica la label solo se vuoi l'injection automatica per TUTTI i pod nel namespace `default`. In alternativa crea un namespace dedicato per le tue app e applica la label lì.
+> Note: applica la label solo se vuoi l'injection automatica per TUTTI i pod nel namespace `default`. In alternativa crea un namespace dedicato per le tue app e applica la label lì.
 
 ### 4. Monitor Istio
 
 ```bash
 kubectl apply -f ./files/istio-monitor.yml
 ```
-> Nota: Import dashboard grafana ID: 7636, Jetson Dashboard from ./k8s/files
+> Note: Import dashboard grafana ID: 7636, Jetson Dashboard from ./k8s/files
 
 ### 5. Jetson Exporter (metriche da jtop)
 
