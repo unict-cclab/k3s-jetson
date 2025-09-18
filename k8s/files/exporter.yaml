@@ -35,7 +35,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: jetson-exporter
-  namespace: monitoring
+  namespace: observability
 spec:
   selector:
     matchLabels:
