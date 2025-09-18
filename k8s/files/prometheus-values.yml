@@ -1,0 +1,80 @@
+alertmanager:
+  enabled: false
+
+grafana:
+  nodeSelector:
+    kubernetes.io/hostname: k3s-master-01
+  service:
+    type: NodePort
+    nodePort: 30000
+  persistence:
+    enabled: true
+    type: sts
+    storageClassName: local-path
+    accessModes:
+      - ReadWriteOnce
+    size: 1Gi
+
+prometheusOperator:
+  nodeSelector:
+    kubernetes.io/hostname: k3s-master-01
+
+prometheus:
+  service:
+    type: NodePort
+    nodePort: 30090
+  prometheusSpec:
+    nodeSelector:
+      kubernetes.io/hostname: k3s-master-01
+    resources:
+      requests:
+        memory: 3Gi
+        cpu: 500m
+      limits:
+        memory: 3Gi
+        cpu: 1000m
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: local-path
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 5Gi
+    scrapeInterval: "5s"
+    additionalScrapeConfigs:
+      - job_name: 'jetson-exporter'
+        scrape_interval: 5s
+        kubernetes_sd_configs:
+          - namespaces:
+              names:
+                - monitoring
+            role: pod
+        metrics_path: /metrics
+        scheme: http
+        relabel_configs:
+      # Seleziona solo i pod con etichetta app=jetson-exporter
+        - action: keep
+          source_labels:
+            - __meta_kubernetes_pod_label_app
+          regex: jetson-exporter
+      # Imposta il target per il job per utilizzare la porta corretta (9401)
+        - action: replace
+          source_labels:
+            - __meta_kubernetes_pod_name
+          target_label: __param_target
+          replacement: "9401"
+          # Imposta il nome dell'istanza come indirizzo del pod
+        - action: replace
+          source_labels:
+            - __meta_kubernetes_pod_ip
+            - __param_target
+          target_label: instance
+          separator: ":"
+          # Imposta l'indirizzo correttamente, includendo la porta 9401
+        - action: replace
+          source_labels:
+            - __meta_kubernetes_pod_ip
+          target_label: __address__
+          replacement: "${1}:9401"
+
