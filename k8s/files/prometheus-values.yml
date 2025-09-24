@@ -19,6 +19,10 @@ prometheusOperator:
   nodeSelector:
     kubernetes.io/hostname: k3s-master-01
 
+kube-state-metrics:
+  nodeSelector:
+    kubernetes.io/hostname: k3s-master-01
+
 prometheus:
   service:
     type: NodePort
@@ -77,4 +81,5 @@ prometheus:
             - __meta_kubernetes_pod_ip
           target_label: __address__
           replacement: "${1}:9401"
+
 
