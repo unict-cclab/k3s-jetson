@@ -61,6 +61,7 @@ helm upgrade --install prometheus-stack prometheus-community/kube-prometheus-sta
 ```
 
 ### 2. Installazione Istio
+> ⚠️ **Note:** Istio is currently not available on Jetson due to incompatibility with Iptables.
 
 ```bash
 helm repo add istio https://istio-release.storage.googleapis.com/charts
