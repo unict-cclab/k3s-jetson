@@ -69,10 +69,31 @@
       when:
         - containerd_config.stat.exists
         - nvidia_runtime_present.rc != 0
+        
+    - name: Ensure certs.d directory for registry exists
+      file:
+        path: "/var/lib/rancher/k3s/agent/etc/containerd/certs.d/{{ registry_host }}:{{ registry_port }}"
+        state: directory
+        mode: "0755"
 
+    - name: Configure HTTP registry access (skip TLS verify)
+      copy:
+        dest: "/var/lib/rancher/k3s/agent/etc/containerd/certs.d/{{ registry_host }}:{{ registry_port }}/hosts.toml"
+        content: |
+          server = "http://{{ registry_host }}:{{ registry_port }}"
+
+          [host."http://{{ registry_host }}:{{ registry_port }}"]
+            capabilities = ["pull", "resolve", "push"]
+            skip_verify = true
+        mode: "0644"
+        
     - name: Restart containerd
       systemd:
         name: containerd
+        state: restarted
+    - name: Restart K3s service to apply registry config
+      systemd:
+        name: k3s-agent
         state: restarted
 
     - name: Remove hold on nvidia packages
