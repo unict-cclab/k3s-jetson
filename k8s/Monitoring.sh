@@ -30,7 +30,7 @@ echo "Prometheus + Grafana + Istio + Jetson Exporter installation complete!"
 
 # Namespace Plugin
 NAMESPACE_NVIDIA="nvidia-device-plugin"
-kubectl create namespace $NAMESPACE
+kubectl create namespace $NAMESPACE_NVIDIA
 
 #4. Add label to the nodes
 #   - jetsonorigin -> orin
