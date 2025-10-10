@@ -14,13 +14,13 @@ helm upgrade --install prometheus-stack prometheus-community/kube-prometheus-sta
     -n $NAMESPACE \
     --create-namespace
 #3. Install Istio 
-helm repo add istio https://istio-release.storage.googleapis.com/charts
-helm repo update
-helm install istio-base istio/base --version 1.26.2 --set defaultRevision=default -n istio-system --create-namespace
-helm install istiod istio/istiod --version 1.26.2 -f ./files/values.yml -n istio-system --create-namespace --wait
-kubectl label namespace default istio-injection=enabled
+#helm repo add istio https://istio-release.storage.googleapis.com/charts
+#helm repo update
+#helm install istio-base istio/base --version 1.26.2 --set defaultRevision=default -n istio-system --create-namespace
+#helm install istiod istio/istiod --version 1.26.2 -f ./files/values.yml -n istio-system --create-namespace --wait
+#kubectl label namespace default istio-injection=enabled
 #install monitor Istio
-kubectl apply -f ./files/istio-monitor.yml
+#kubectl apply -f ./files/istio-monitor.yml
 # 4. Apply exporter (exporter.yaml in the files directory)
 kubectl apply -n $NAMESPACE -f ./files/exporter.yaml
 
