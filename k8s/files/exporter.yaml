@@ -29,7 +29,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: jetson-exporter-sa
-    namespace: monitoring
+    namespace: observability
 ---
 apiVersion: apps/v1
 kind: DaemonSet
