@@ -52,7 +52,7 @@ prometheus:
         kubernetes_sd_configs:
           - namespaces:
               names:
-                - monitoring
+                - observability
             role: pod
         metrics_path: /metrics
         scheme: http
@@ -81,5 +81,6 @@ prometheus:
             - __meta_kubernetes_pod_ip
           target_label: __address__
           replacement: "${1}:9401"
+
 
 
